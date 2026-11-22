@@ -1,0 +1,6 @@
+# Keep LF everywhere so install.sh and other scripts run on Linux/macOS even
+# when the repo is checked out on Windows.
+* text=auto eol=lf
+*.png binary
+*.dll binary
+*.zip binary

@@ -1,0 +1,11 @@
+{
+  "_comment": "Single source of truth for release targets, used by the npm, Homebrew, winget and installer packaging.",
+  "targets": [
+    { "triple": "x86_64-unknown-linux-musl",  "os": "linux",  "arch": "x86_64",  "npm": "tvpn-linux-x64",    "npm_os": "linux",  "npm_cpu": "x64",   "archive": "tar.gz", "exe": "tvpn" },
+    { "triple": "aarch64-unknown-linux-musl", "os": "linux",  "arch": "aarch64", "npm": "tvpn-linux-arm64",  "npm_os": "linux",  "npm_cpu": "arm64", "archive": "tar.gz", "exe": "tvpn" },
+    { "triple": "x86_64-apple-darwin",        "os": "macos",  "arch": "x86_64",  "npm": "tvpn-darwin-x64",   "npm_os": "darwin", "npm_cpu": "x64",   "archive": "tar.gz", "exe": "tvpn" },
+    { "triple": "aarch64-apple-darwin",       "os": "macos",  "arch": "aarch64", "npm": "tvpn-darwin-arm64", "npm_os": "darwin", "npm_cpu": "arm64", "archive": "tar.gz", "exe": "tvpn" },
+    { "triple": "x86_64-pc-windows-msvc",     "os": "windows","arch": "x86_64",  "npm": "tvpn-win32-x64",    "npm_os": "win32",  "npm_cpu": "x64",   "archive": "zip",    "exe": "tvpn.exe" },
+    { "triple": "aarch64-pc-windows-msvc",    "os": "windows","arch": "aarch64", "npm": "tvpn-win32-arm64",  "npm_os": "win32",  "npm_cpu": "arm64", "archive": "zip",    "exe": "tvpn.exe" }
+  ]
+}

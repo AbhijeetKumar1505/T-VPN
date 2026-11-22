@@ -1,0 +1,13 @@
+/target
+/dist
+/packaging/npm/tvpn/README.md
+/packaging/npm/tvpn/LICENSE-*
+node_modules/
+*.whl
+__pycache__/
+.venv/
+*.tmp
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

@@ -1,0 +1,28 @@
+{
+  "name": "tvpn",
+  "version": "0.1.0",
+  "description": "On-demand WireGuard VPN for the terminal: client and self-hosted server in one native binary",
+  "license": "MIT OR Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OWNER/tvpn.git"
+  },
+  "homepage": "https://github.com/OWNER/tvpn#readme",
+  "bugs": "https://github.com/OWNER/tvpn/issues",
+  "keywords": ["vpn", "wireguard", "tunnel", "cli", "privacy", "rust"],
+  "bin": {
+    "tvpn": "bin/tvpn.js"
+  },
+  "files": ["bin/", "README.md", "LICENSE-MIT", "LICENSE-APACHE"],
+  "engines": {
+    "node": ">=16"
+  },
+  "optionalDependencies": {
+    "tvpn-linux-x64": "0.1.0",
+    "tvpn-linux-arm64": "0.1.0",
+    "tvpn-darwin-x64": "0.1.0",
+    "tvpn-darwin-arm64": "0.1.0",
+    "tvpn-win32-x64": "0.1.0",
+    "tvpn-win32-arm64": "0.1.0"
+  }
+}

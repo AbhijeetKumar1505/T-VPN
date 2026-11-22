@@ -1,0 +1,29 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.6.0.schema.json
+PackageIdentifier: {{WINGET_ID}}
+PackageVersion: {{VERSION}}
+PackageLocale: en-US
+Publisher: {{REPO_OWNER}}
+PublisherUrl: https://github.com/{{REPO_OWNER}}
+PublisherSupportUrl: https://github.com/{{REPO}}/issues
+PackageName: tvpn
+PackageUrl: https://github.com/{{REPO}}
+License: MIT OR Apache-2.0
+LicenseUrl: https://github.com/{{REPO}}/blob/main/LICENSE-MIT
+ShortDescription: On-demand WireGuard VPN for the terminal (client and self-hosted server).
+Description: |-
+  tvpn is a single native binary that connects to any WireGuard server from cmd,
+  PowerShell or Windows Terminal (`tvpn up`), shows live status, and disconnects
+  cleanly with Ctrl+C. It can also run your own WireGuard server and generate
+  client configs (with QR codes for the mobile apps). Requires an administrator
+  terminal to create the tunnel adapter.
+Moniker: tvpn
+Tags:
+  - vpn
+  - wireguard
+  - cli
+  - tunnel
+  - privacy
+  - networking
+ReleaseNotesUrl: https://github.com/{{REPO}}/releases/tag/v{{VERSION}}
+ManifestType: defaultLocale
+ManifestVersion: 1.6.0

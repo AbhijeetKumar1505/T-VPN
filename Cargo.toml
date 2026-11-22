@@ -1,0 +1,65 @@
+[package]
+name = "tvpn"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.88"
+authors = ["T-VPN contributors"]
+description = "On-demand WireGuard VPN for the terminal: client and self-hosted server in one Rust binary"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/OWNER/tvpn"
+documentation = "https://github.com/OWNER/tvpn#readme"
+readme = "README.md"
+keywords = ["vpn", "wireguard", "tunnel", "cli", "privacy"]
+categories = ["command-line-utilities", "network-programming"]
+exclude = ["/packaging", "/scripts", "/.github", "/install.sh", "/install.ps1", "/pyproject.toml"]
+
+[lib]
+name = "tvpn"
+path = "src/lib.rs"
+
+[[bin]]
+name = "tvpn"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1"
+base64 = "0.22"
+boringtun = "0.7.1"
+clap = { version = "4.5", features = ["derive", "env", "wrap_help"] }
+clap_complete = "4.5"
+console = "0.16"
+ipnet = { version = "2.10", features = ["serde"] }
+parking_lot = "0.12"
+qrcode = { version = "0.14", default-features = false }
+rand_core = { version = "0.6", features = ["getrandom"] }
+route_manager = "0.2.18"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+socket2 = { version = "0.6", features = ["all"] }
+thiserror = "2"
+tokio = { version = "1.40", features = ["rt-multi-thread", "macros", "net", "time", "signal", "sync", "io-util"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+tun-rs = { version = "2.8.18", features = ["async"] }
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
+[target.'cfg(windows)'.dependencies]
+sha2 = "0.10"
+ureq = "3"
+zip = { version = "2", default-features = false, features = ["deflate"] }
+windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_Security", "Win32_System_Threading"] }
+
+[dev-dependencies]
+tempfile = "3"
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+strip = true
+
+# Used by `cargo dist`-style release builds and the packaging pipelines.
+[profile.dist]
+inherits = "release"

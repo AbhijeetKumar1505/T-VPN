@@ -1,0 +1,20 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.installer.1.6.0.schema.json
+PackageIdentifier: {{WINGET_ID}}
+PackageVersion: {{VERSION}}
+InstallerType: zip
+NestedInstallerType: portable
+NestedInstallerFiles:
+  - RelativeFilePath: tvpn.exe
+    PortableCommandAlias: tvpn
+Commands:
+  - tvpn
+ReleaseDate: {{DATE}}
+Installers:
+  - Architecture: x64
+    InstallerUrl: https://github.com/{{REPO}}/releases/download/v{{VERSION}}/tvpn-x86_64-pc-windows-msvc.zip
+    InstallerSha256: {{SHA256_UPPER:tvpn-x86_64-pc-windows-msvc.zip}}
+  - Architecture: arm64
+    InstallerUrl: https://github.com/{{REPO}}/releases/download/v{{VERSION}}/tvpn-aarch64-pc-windows-msvc.zip
+    InstallerSha256: {{SHA256_UPPER:tvpn-aarch64-pc-windows-msvc.zip}}
+ManifestType: installer
+ManifestVersion: 1.6.0

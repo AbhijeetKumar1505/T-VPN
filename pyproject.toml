@@ -1,0 +1,44 @@
+# pip / pipx / uv distribution: maturin builds wheels that contain the native
+# `tvpn` binary (like ruff and uv do). No Python code is involved at runtime.
+#
+#   pip install tvpn        |  pipx install tvpn   |  uv tool install tvpn
+#
+# Local build: pip install maturin && maturin build --release
+
+[build-system]
+requires = ["maturin>=1.7,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "tvpn"
+description = "On-demand WireGuard VPN for the terminal: client and self-hosted server in one native binary"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT OR Apache-2.0" }
+keywords = ["vpn", "wireguard", "tunnel", "cli", "privacy"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Rust",
+    "Topic :: Internet",
+    "Topic :: System :: Networking",
+    "Topic :: Security",
+]
+dynamic = ["version"]
+
+[project.urls]
+Homepage = "https://github.com/OWNER/tvpn"
+Repository = "https://github.com/OWNER/tvpn"
+Issues = "https://github.com/OWNER/tvpn/issues"
+
+[tool.maturin]
+bindings = "bin"
+strip = true
+include = [{ path = "LICENSE-MIT", format = "sdist" }, { path = "LICENSE-APACHE", format = "sdist" }]

@@ -1,0 +1,53 @@
+# Homebrew formula for tvpn. Rendered by packaging/render.mjs on each release
+# and pushed to the tap repository ({{REPO_OWNER}}/homebrew-tap):
+#
+#   brew install {{REPO_OWNER}}/tap/tvpn
+class Tvpn < Formula
+  desc "On-demand WireGuard VPN for the terminal (client and self-hosted server)"
+  homepage "https://github.com/{{REPO}}"
+  version "{{VERSION}}"
+  license any_of: ["MIT", "Apache-2.0"]
+
+  on_macos do
+    on_arm do
+      url "https://github.com/{{REPO}}/releases/download/v{{VERSION}}/tvpn-aarch64-apple-darwin.tar.gz"
+      sha256 "{{SHA256:tvpn-aarch64-apple-darwin.tar.gz}}"
+    end
+    on_intel do
+      url "https://github.com/{{REPO}}/releases/download/v{{VERSION}}/tvpn-x86_64-apple-darwin.tar.gz"
+      sha256 "{{SHA256:tvpn-x86_64-apple-darwin.tar.gz}}"
+    end
+  end
+
+  on_linux do
+    on_arm do
+      url "https://github.com/{{REPO}}/releases/download/v{{VERSION}}/tvpn-aarch64-unknown-linux-musl.tar.gz"
+      sha256 "{{SHA256:tvpn-aarch64-unknown-linux-musl.tar.gz}}"
+    end
+    on_intel do
+      url "https://github.com/{{REPO}}/releases/download/v{{VERSION}}/tvpn-x86_64-unknown-linux-musl.tar.gz"
+      sha256 "{{SHA256:tvpn-x86_64-unknown-linux-musl.tar.gz}}"
+    end
+  end
+
+  def install
+    bin.install "tvpn"
+    generate_completions_from_executable(bin/"tvpn", "completions")
+  end
+
+  def caveats
+    <<~EOS
+      Creating a tunnel needs root: `tvpn up` re-runs itself through sudo when needed.
+      Get started with:
+        tvpn doctor
+        tvpn import ~/Downloads/your-wireguard.conf
+        tvpn up
+    EOS
+  end
+
+  test do
+    assert_match version.to_s, shell_output("#{bin}/tvpn --version")
+    key = shell_output("#{bin}/tvpn genkey").strip
+    assert_equal 44, key.length
+  end
+end
