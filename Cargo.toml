@@ -41,13 +41,14 @@ tokio = { version = "1.40", features = ["rt-multi-thread", "macros", "net", "tim
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
 tun-rs = { version = "2.8.18", features = ["async"] }
+# HTTPS + SigV4 for `tvpn cloud` (and the Wintun download on Windows).
+sha2 = "0.11"
+ureq = "3"
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2"
 
 [target.'cfg(windows)'.dependencies]
-sha2 = "0.11"
-ureq = "3"
 zip = { version = "9", default-features = false, features = ["deflate"] }
 windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_Security", "Win32_System_Threading"] }
 

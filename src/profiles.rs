@@ -71,7 +71,10 @@ pub fn getting_started(name: &str) -> String {
          - a tvpn server you run: `tvpn server add-peer <name>` on that server\n\
          Then import it and connect:\n  \
          tvpn import <file.conf> --name {name}\n  \
-         tvpn up {name}"
+         tvpn up {name}\n\
+         Or let tvpn start a server in the region you want (uses your AWS account):\n  \
+         tvpn cloud setup\n  \
+         tvpn cloud up <region>      # e.g. mumbai, tokyo, de; see `tvpn cloud regions`"
     )
 }
 

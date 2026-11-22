@@ -52,6 +52,10 @@ pub async fn run() -> Result<i32> {
         profiles.len(),
         if profiles.len() == 1 { "" } else { "s" }
     ));
+    match super::cloud::credentials_summary() {
+        Some(source) => r.ok(format!("cloud: AWS credentials from {source}")),
+        None => r.info("cloud: not set up (optional: `tvpn cloud setup` to change region on demand)"),
+    }
     let store = ServerStore::default_location();
     match store.load() {
         Ok((cfg, meta)) => {

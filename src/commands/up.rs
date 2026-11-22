@@ -1,16 +1,22 @@
-//! `tvpn up`: connect as a client.
+//! `tvpn up`: connect as a client. [`connect`] is shared with `tvpn cloud up`.
 
 use super::session::{self, Running, Shutdown};
 use crate::cli::UpArgs;
+use crate::cloud::CloudServer;
+use crate::config::Config;
 use crate::control::{self, Mode, SessionState};
-use crate::engine::{Engine, PeerConfig, Sockets};
+use crate::engine::{Engine, PeerConfig, PeerStatus, Sockets};
 use crate::netcfg::{self, Applied, ClientPlan};
 use crate::tun::{self, TunOptions};
-use crate::{keys, privilege, profiles, ui};
+use crate::ui::{self, StatusLine};
+use crate::{keys, privilege, profiles};
 use anyhow::{Context, Result, anyhow, bail};
 use std::sync::Arc;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 use tokio::net::TcpListener;
+
+/// Exit code when the user cancels with Ctrl+C before connecting.
+pub const CANCELLED: i32 = 130;
 
 pub async fn run(args: UpArgs) -> Result<i32> {
     let profile = profiles::resolve(args.profile.as_deref())?;
@@ -23,7 +29,24 @@ pub async fn run(args: UpArgs) -> Result<i32> {
 
     privilege::ensure_elevated(!args.no_sudo)?;
     let mut shutdown = Shutdown::install();
+    ensure_no_client_session().await?;
+    connect(
+        Connect {
+            name: profile.name,
+            config: cfg,
+            no_dns: args.no_dns,
+            interface: args.interface,
+            quiet: args.quiet,
+            wait_for_server: None,
+            cloud: None,
+        },
+        &mut shutdown,
+    )
+    .await
+}
 
+/// Refuse to start while a client session is running; clean up a crashed one.
+pub async fn ensure_no_client_session() -> Result<()> {
     if let Some(prev) = SessionState::load(Mode::Client) {
         if control::is_alive(&prev).await {
             bail!(
@@ -33,8 +56,27 @@ pub async fn run(args: UpArgs) -> Result<i32> {
             );
         }
         ui::warn("a previous session did not shut down cleanly; restoring its network settings");
-        session::cleanup_stale(&prev);
+        session::cleanup_stale(&prev).await;
     }
+    Ok(())
+}
+
+pub struct Connect {
+    /// Profile or session name shown in status output.
+    pub name: String,
+    pub config: Config,
+    pub no_dns: bool,
+    pub interface: Option<String>,
+    pub quiet: bool,
+    /// Wait (up to this long) for the first handshake before routing any
+    /// traffic, so the user keeps their internet while a new server boots.
+    pub wait_for_server: Option<Duration>,
+    pub cloud: Option<CloudServer>,
+}
+
+/// Bring up the tunnel for `c.config` and run the session until it ends.
+pub async fn connect(c: Connect, shutdown: &mut Shutdown) -> Result<i32> {
+    let cfg = c.config;
 
     // Resolve endpoints before routes or DNS change.
     let mut peers = Vec::with_capacity(cfg.peers.len());
@@ -61,7 +103,7 @@ pub async fn run(args: UpArgs) -> Result<i32> {
     let want_v4 = peers.iter().any(|p| p.endpoint.is_some_and(|e| e.is_ipv4()));
     let want_v6 = peers.iter().any(|p| p.endpoint.is_some_and(|e| e.is_ipv6()));
 
-    let requested_name = args.interface.clone().unwrap_or_else(|| tun::CLIENT_IFNAME.to_string());
+    let requested_name = c.interface.clone().unwrap_or_else(|| tun::CLIENT_IFNAME.to_string());
     let device = tun::create(&TunOptions {
         name: &requested_name,
         addresses: &cfg.interface.addresses,
@@ -84,14 +126,27 @@ pub async fn run(args: UpArgs) -> Result<i32> {
         mode: Mode::Client,
         version: env!("CARGO_PKG_VERSION").to_string(),
         pid: session::pid(),
-        profile: profile.name.clone(),
+        profile: c.name.clone(),
         interface: ifname.clone(),
         addresses: cfg.interface.addresses.clone(),
         control_port: listener.local_addr()?.port(),
         started_at: control::now_unix(),
         applied: Applied::default(),
+        cloud: c.cloud.clone(),
     };
     state.save(&token)?;
+
+    if let Some(max) = c.wait_for_server
+        && !wait_for_handshake(&engine, max, shutdown, c.quiet).await
+    {
+        engine.shutdown().await;
+        drop(device);
+        SessionState::remove(Mode::Client);
+        if shutdown.triggered() {
+            return Ok(CANCELLED);
+        }
+        bail!("the server did not answer within {}", ui::duration(max.as_secs()));
+    }
 
     let all_allowed: Vec<_> = cfg.peers.iter().flat_map(|p| p.allowed_ips.iter().copied()).collect();
     let plan = ClientPlan {
@@ -101,7 +156,7 @@ pub async fn run(args: UpArgs) -> Result<i32> {
         endpoints: endpoints.iter().map(|(_, a)| a.ip()).collect(),
         dns: &cfg.interface.dns,
         dns_search: &cfg.interface.dns_search,
-        configure_dns: !args.no_dns,
+        configure_dns: !c.no_dns,
     };
     let mut applied = Applied::default();
     let mut notes = Vec::new();
@@ -115,7 +170,7 @@ pub async fn run(args: UpArgs) -> Result<i32> {
     };
 
     #[cfg(windows)]
-    if result.is_ok() && !args.no_dns && !cfg.interface.dns.is_empty() {
+    if result.is_ok() && !c.no_dns && !cfg.interface.dns.is_empty() {
         match device.set_dns_servers(&cfg.interface.dns) {
             Ok(()) => applied.dns = Some(netcfg::DnsRecord::WindowsAdapter),
             Err(e) => notes.push(format!("DNS was not configured: {e}")),
@@ -134,8 +189,8 @@ pub async fn run(args: UpArgs) -> Result<i32> {
         return Err(e);
     }
 
-    if !args.quiet {
-        print_banner(&profile.name, &ifname, &cfg, &endpoints, &applied, args.no_dns);
+    if !c.quiet {
+        print_banner(&c.name, &ifname, &cfg, &endpoints, &applied, c.no_dns);
     }
     for n in notes {
         ui::warn(n);
@@ -150,19 +205,48 @@ pub async fn run(args: UpArgs) -> Result<i32> {
             engine,
             device,
             applied,
-            quiet: args.quiet,
+            quiet: c.quiet,
             started,
         },
-        &mut shutdown,
+        shutdown,
         || Err(anyhow!("reload is only available for server sessions")),
     )
     .await
 }
 
+/// Wait until the engine has a session with any peer. Returns false on timeout or Ctrl+C.
+async fn wait_for_handshake(engine: &Engine, max: Duration, shutdown: &mut Shutdown, quiet: bool) -> bool {
+    let start = Instant::now();
+    let mut line = StatusLine::new(!quiet);
+    if !line.is_enabled() && !quiet {
+        println!("Waiting for the server to finish booting…");
+    }
+    loop {
+        if engine.status().iter().any(PeerStatus::connected) {
+            line.clear();
+            return true;
+        }
+        if shutdown.triggered() || start.elapsed() >= max {
+            line.clear();
+            return false;
+        }
+        line.set(&format!(
+            "  {}{} {}",
+            ui::yellow(ui::WAIT),
+            ui::yellow("waiting for the server to finish booting…"),
+            ui::dim(ui::duration(start.elapsed().as_secs()))
+        ));
+        tokio::select! {
+            _ = tokio::time::sleep(Duration::from_millis(500)) => {}
+            _ = shutdown.wait() => {}
+        }
+    }
+}
+
 fn print_banner(
     profile: &str,
     ifname: &str,
-    cfg: &crate::config::Config,
+    cfg: &Config,
     endpoints: &[(String, std::net::SocketAddr)],
     applied: &Applied,
     no_dns: bool,

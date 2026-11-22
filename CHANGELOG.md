@@ -6,6 +6,18 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+- `tvpn cloud`: change your region on demand. `tvpn cloud up <region>` starts
+  a short-lived WireGuard server in that region on your own AWS account, waits
+  for it to boot before routing traffic, connects through it, and deletes it
+  when you disconnect. `tvpn cloud setup` stores AWS keys and shows the minimal
+  IAM policy; `tvpn cloud regions`, `ls` and `cleanup` list regions and find or
+  delete leftover servers. Servers also delete themselves when idle and after a
+  maximum lifetime. Regions accept city names and country codes.
+- `tvpn status` shows a session's cloud server; `tvpn doctor` reports whether
+  cloud credentials are configured.
+- `tvpn down` after a crashed cloud session also deletes its server.
+
 ## [0.1.2] - 2026-11-22
 
 ### Fixed

@@ -41,7 +41,7 @@ pub async fn stop(mode: Mode, allow_sudo: bool) -> Result<i32> {
         mode.as_str(),
         state.pid
     ));
-    session::cleanup_stale(&state);
+    session::cleanup_stale(&state).await;
     ui::success("Cleaned up.");
     Ok(0)
 }

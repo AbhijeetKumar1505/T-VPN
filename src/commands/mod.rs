@@ -1,5 +1,6 @@
 //! Command implementations.
 
+mod cloud;
 mod doctor;
 mod down;
 mod profile;
@@ -26,6 +27,7 @@ pub async fn run(cli: Cli) -> Result<i32> {
         Command::Pubkey => profile::pubkey(),
         Command::Genpsk => profile::genpsk(),
         Command::Keypair => profile::keypair(),
+        Command::Cloud(c) => cloud::run(c).await,
         Command::Server(s) => server::run(s).await,
         Command::Doctor => doctor::run().await,
         Command::Completions(a) => {
