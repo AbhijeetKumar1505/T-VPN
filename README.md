@@ -1,5 +1,9 @@
 # tvpn
 
+[![CI](https://github.com/AbhijeetKumar1505/T-VPN/actions/workflows/ci.yml/badge.svg)](https://github.com/AbhijeetKumar1505/T-VPN/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/AbhijeetKumar1505/T-VPN?sort=semver)](https://github.com/AbhijeetKumar1505/T-VPN/releases/latest)
+[![License: MIT OR Apache-2.0](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue)](#license)
+
 **An on-demand WireGuard VPN for your terminal.** Connect when you need it,
 gone when you don't: no background service, no GUI, one native binary written
 in Rust. The same binary also runs your own VPN server.
@@ -34,18 +38,18 @@ tvpn 0.1.0 · profile work
 
 | Channel | Command |
 |---|---|
+| **Shell script** (Linux, macOS, WSL) | `curl -fsSL https://raw.githubusercontent.com/AbhijeetKumar1505/T-VPN/main/install.sh \| sh` |
+| **PowerShell** (Windows) | `irm https://raw.githubusercontent.com/AbhijeetKumar1505/T-VPN/main/install.ps1 \| iex` |
+| **cmd.exe** (Windows) | `powershell -NoProfile -ExecutionPolicy Bypass -c "irm https://raw.githubusercontent.com/AbhijeetKumar1505/T-VPN/main/install.ps1 \| iex"` |
+| **Homebrew** (macOS, Linux) | `brew tap abhijeetkumar1505/tvpn https://github.com/AbhijeetKumar1505/T-VPN && brew install tvpn` |
 | **npm** (any OS) | `npm install -g tvpn` |
 | **pip / pipx / uv** (any OS) | `pipx install tvpn` · `uv tool install tvpn` · `pip install tvpn` |
-| **Homebrew** (macOS, Linux) | `brew install OWNER/tap/tvpn` |
-| **winget** (Windows) | `winget install tvpn` |
-| **Shell script** (Linux, macOS, WSL) | `curl -fsSL https://raw.githubusercontent.com/OWNER/tvpn/main/install.sh \| sh` |
-| **PowerShell** (Windows) | `irm https://raw.githubusercontent.com/OWNER/tvpn/main/install.ps1 \| iex` |
-| **cmd.exe** (Windows) | `powershell -NoProfile -ExecutionPolicy Bypass -c "irm https://raw.githubusercontent.com/OWNER/tvpn/main/install.ps1 \| iex"` |
+| **winget** (Windows) | `winget install AbhijeetKumar1505.tvpn` |
 | **Cargo** | `cargo install tvpn` |
 
 Prebuilt binaries for Linux (x86_64/arm64, static), macOS (Intel/Apple
 Silicon) and Windows (x64/arm64) are attached to every
-[GitHub release](https://github.com/OWNER/tvpn/releases) with a `SHA256SUMS`
+[GitHub release](https://github.com/AbhijeetKumar1505/T-VPN/releases) with a `SHA256SUMS`
 file. The script installers verify the checksum before installing.
 
 Then check your system:

@@ -5,10 +5,10 @@
   "license": "MIT OR Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/OWNER/tvpn.git"
+    "url": "git+https://github.com/AbhijeetKumar1505/T-VPN.git"
   },
-  "homepage": "https://github.com/OWNER/tvpn#readme",
-  "bugs": "https://github.com/OWNER/tvpn/issues",
+  "homepage": "https://github.com/AbhijeetKumar1505/T-VPN#readme",
+  "bugs": "https://github.com/AbhijeetKumar1505/T-VPN/issues",
   "keywords": ["vpn", "wireguard", "tunnel", "cli", "privacy", "rust"],
   "bin": {
     "tvpn": "bin/tvpn.js"

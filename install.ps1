@@ -3,8 +3,8 @@
   tvpn installer for Windows (PowerShell 5.1+ and PowerShell 7).
 
 .DESCRIPTION
-  PowerShell:  irm https://raw.githubusercontent.com/OWNER/tvpn/main/install.ps1 | iex
-  cmd.exe:     powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/OWNER/tvpn/main/install.ps1 | iex"
+  PowerShell:  irm https://raw.githubusercontent.com/AbhijeetKumar1505/T-VPN/main/install.ps1 | iex
+  cmd.exe:     powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/AbhijeetKumar1505/T-VPN/main/install.ps1 | iex"
 
   Installs tvpn.exe and wintun.dll to %LOCALAPPDATA%\Programs\tvpn and adds it
   to your user PATH. Downloads are verified against the release SHA256SUMS.
@@ -15,7 +15,7 @@
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 
-$Repo = if ($env:TVPN_REPO) { $env:TVPN_REPO } else { 'OWNER/tvpn' }
+$Repo = if ($env:TVPN_REPO) { $env:TVPN_REPO } else { 'AbhijeetKumar1505/T-VPN' }
 $Version = if ($env:TVPN_VERSION) { $env:TVPN_VERSION.TrimStart('v') } else { 'latest' }
 $InstallDir = if ($env:TVPN_INSTALL_DIR) { $env:TVPN_INSTALL_DIR } else { Join-Path $env:LOCALAPPDATA 'Programs\tvpn' }
 
