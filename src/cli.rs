@@ -24,6 +24,17 @@ Profiles are standard WireGuard .conf files, so configs from any WireGuard
 provider work, and configs made by `tvpn server add-peer` work in the official
 WireGuard apps.";
 
+const IMPORT_HELP: &str = "\
+Where do I get a .conf file?
+  - From a VPN provider that offers WireGuard config downloads
+    (look for \"WireGuard configuration\" in your account's download page).
+  - From a tvpn server you run: `tvpn server add-peer <name> -o <name>.conf`.
+
+Examples:
+  tvpn import ~/Downloads/us-east.conf --name work
+  tvpn import laptop.conf
+  tvpn up work";
+
 #[derive(Debug, Parser)]
 #[command(
     name = "tvpn",
@@ -60,6 +71,7 @@ pub enum Command {
     Status(StatusArgs),
 
     /// Import a WireGuard .conf file as a profile
+    #[command(after_help = IMPORT_HELP)]
     Import(ImportArgs),
 
     /// List saved profiles
