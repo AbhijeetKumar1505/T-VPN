@@ -6,6 +6,20 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-11-22
+
+### Fixed
+- `tvpn up` without any imported profile now explains where WireGuard configs
+  come from (a VPN provider or `tvpn server add-peer`) and how to import one,
+  instead of pointing at `tvpn import --help`. `tvpn import --help` now has
+  examples too.
+- `tvpn server init` rejects an empty, URL-shaped or `host:port` `--endpoint`
+  up front instead of saving a server config that later breaks `add-peer`.
+
+### Changed
+- README: the client quick start explains that tvpn needs a WireGuard config
+  and that profile names like `work` are labels you choose.
+
 ## [0.1.1] - 2026-11-22
 
 ### Changed

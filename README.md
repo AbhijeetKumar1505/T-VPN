@@ -60,6 +60,15 @@ tvpn doctor
 
 ## Use it as a client
 
+tvpn connects using a **WireGuard config file** (`.conf`): tvpn is the VPN
+software, not a VPN service, so the config comes from a server somewhere:
+
+- a VPN provider that offers WireGuard downloads (look for "WireGuard
+  configuration" in your account), or
+- your own server: see [Run your own server](#run-your-own-server).
+
+The profile name (`work` below) is just a label you choose.
+
 ```sh
 # 1. Import a WireGuard config from your provider or server
 tvpn import ~/Downloads/us-east.conf --name work

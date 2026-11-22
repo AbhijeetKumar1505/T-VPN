@@ -80,6 +80,10 @@ impl ServerStore {
                 self.dir.display()
             );
         }
+        let host = validate_endpoint_host(&opts.endpoint_host)?;
+        if opts.port == 0 {
+            bail!("--port must not be 0");
+        }
         if opts.subnet_v4.prefix_len() > 30 {
             bail!("subnet {} is too small (use /30 or larger, e.g. 10.8.0.0/24)", opts.subnet_v4);
         }
@@ -102,7 +106,7 @@ impl ServerStore {
             },
             peers: Vec::new(),
         };
-        let endpoint = Endpoint { host: opts.endpoint_host.clone(), port: opts.port }.to_string();
+        let endpoint = Endpoint { host, port: opts.port }.to_string();
         let meta = ServerMeta {
             endpoint,
             dns: opts.dns.clone(),
@@ -214,6 +218,39 @@ impl ServerStore {
     }
 }
 
+/// Check the public hostname or IP given with `--endpoint` (the port comes
+/// from `--port`). Returns the normalized host.
+pub fn validate_endpoint_host(host: &str) -> Result<String> {
+    let host = host.trim();
+    let bare = host.strip_prefix('[').and_then(|h| h.strip_suffix(']')).unwrap_or(host);
+    if bare.is_empty() {
+        bail!(
+            "the endpoint is empty: pass the public hostname or IP clients connect to, \
+             e.g. --endpoint vpn.example.com"
+        );
+    }
+    if bare.parse::<IpAddr>().is_ok() {
+        return Ok(bare.to_string());
+    }
+    if host.contains("://") {
+        bail!("`{host}` looks like a URL: pass only the hostname or IP, e.g. --endpoint vpn.example.com");
+    }
+    if host.contains(':') {
+        bail!("`{host}` looks like host:port: pass the host with --endpoint and the port with --port");
+    }
+    let valid_label = |l: &str| {
+        !l.is_empty()
+            && l.len() <= 63
+            && !l.starts_with('-')
+            && !l.ends_with('-')
+            && l.chars().all(|c| c.is_ascii_alphanumeric() || c == '-')
+    };
+    if host.len() > 253 || !host.trim_end_matches('.').split('.').all(valid_label) {
+        bail!("`{host}` is not a valid hostname or IP address");
+    }
+    Ok(host.to_string())
+}
+
 fn first_host_v4(net: &Ipv4Net) -> Option<Ipv4Addr> {
     net.hosts().next()
 }
@@ -314,6 +351,28 @@ mod tests {
         store.init(&o, false).unwrap();
         store.add_peer("one", None).unwrap(); // .1 server, .2 peer
         assert!(store.add_peer("two", None).is_err());
+    }
+
+    #[test]
+    fn endpoint_host_validation() {
+        assert_eq!(validate_endpoint_host(" vpn.example.com ").unwrap(), "vpn.example.com");
+        assert_eq!(validate_endpoint_host("203.0.113.7").unwrap(), "203.0.113.7");
+        assert_eq!(validate_endpoint_host("[2001:db8::1]").unwrap(), "2001:db8::1");
+        assert_eq!(validate_endpoint_host("2001:db8::1").unwrap(), "2001:db8::1");
+        for bad in
+            ["", "  ", "[]", "https://vpn.example.com", "vpn.example.com:51820", "bad host", "-x.com", "a..b"]
+        {
+            assert!(validate_endpoint_host(bad).is_err(), "{bad:?} should be rejected");
+        }
+    }
+
+    #[test]
+    fn init_rejects_empty_endpoint_without_writing() {
+        let (_tmp, store) = store();
+        let mut o = opts();
+        o.endpoint_host = String::new();
+        assert!(store.init(&o, false).is_err());
+        assert!(!store.exists(), "nothing may be written for an invalid endpoint");
     }
 
     #[test]

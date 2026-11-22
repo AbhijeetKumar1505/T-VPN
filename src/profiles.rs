@@ -63,15 +63,25 @@ pub fn list() -> Result<Vec<ProfileRef>> {
     list_in(&paths::profiles_dir())
 }
 
+/// Explains where WireGuard configs come from, for users who have none yet.
+pub fn getting_started(name: &str) -> String {
+    format!(
+        "tvpn connects using a WireGuard config file (.conf). Get one from:\n  \
+         - a VPN provider that offers WireGuard config downloads, or\n  \
+         - a tvpn server you run: `tvpn server add-peer <name>` on that server\n\
+         Then import it and connect:\n  \
+         tvpn import <file.conf> --name {name}\n  \
+         tvpn up {name}"
+    )
+}
+
 /// Resolve a profile argument: a saved profile name or a path to a `.conf` file.
 /// With no argument, the only saved profile is used.
 pub fn resolve(arg: Option<&str>) -> Result<ProfileRef> {
     let Some(arg) = arg else {
         let all = list()?;
         return match all.len() {
-            0 => Err(anyhow!(
-                "no profiles yet. Import one with `tvpn import <file.conf>` or pass a path: `tvpn up ./wg0.conf`"
-            )),
+            0 => Err(anyhow!("no profiles yet.\n\n{}", getting_started("myvpn"))),
             1 => Ok(all.into_iter().next().expect("one profile")),
             _ => Err(anyhow!(
                 "several profiles exist; choose one: {}",
@@ -99,7 +109,7 @@ pub fn resolve(arg: Option<&str>) -> Result<ProfileRef> {
     }
     let available = list().unwrap_or_default();
     if available.is_empty() {
-        bail!("profile `{arg}` not found (no profiles imported yet; see `tvpn import --help`)");
+        bail!("profile `{arg}` not found: no profiles imported yet.\n\n{}", getting_started(arg));
     }
     bail!(
         "profile `{arg}` not found. Available: {}",
