@@ -6,6 +6,21 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-11-22
+
+### Changed
+- Dependency updates: `sha2` 0.11, `zip` 9 and `base64` 0.23 (`sha2` and `zip`
+  are used to verify and unpack the Wintun driver on Windows).
+- The Homebrew formula is now updated through a pull request or a deploy key,
+  because `main` is protected by a repository ruleset.
+
+### Internal
+- Repository rulesets: pull requests, required CI checks and automatic Copilot
+  code review on `main`; release tags can't be moved or deleted.
+- `.github/copilot-instructions.md` guides automated code review.
+- The MSRV CI job pins its toolchain through an input, so Dependabot can't
+  mistake the Rust version for an action version.
+
 ## [0.1.0] - 2026-11-22
 
 ### Added

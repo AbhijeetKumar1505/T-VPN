@@ -1,6 +1,6 @@
 {
   "name": "tvpn",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "On-demand WireGuard VPN for the terminal: client and self-hosted server in one native binary",
   "license": "MIT OR Apache-2.0",
   "repository": {
@@ -18,11 +18,11 @@
     "node": ">=16"
   },
   "optionalDependencies": {
-    "tvpn-linux-x64": "0.1.0",
-    "tvpn-linux-arm64": "0.1.0",
-    "tvpn-darwin-x64": "0.1.0",
-    "tvpn-darwin-arm64": "0.1.0",
-    "tvpn-win32-x64": "0.1.0",
-    "tvpn-win32-arm64": "0.1.0"
+    "tvpn-linux-x64": "0.1.1",
+    "tvpn-linux-arm64": "0.1.1",
+    "tvpn-darwin-x64": "0.1.1",
+    "tvpn-darwin-arm64": "0.1.1",
+    "tvpn-win32-x64": "0.1.1",
+    "tvpn-win32-arm64": "0.1.1"
   }
 }
