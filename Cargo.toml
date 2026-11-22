@@ -30,7 +30,7 @@ clap_complete = "4.5"
 console = "0.16"
 ipnet = { version = "2.10", features = ["serde"] }
 parking_lot = "0.12"
-qrcode = { version = "0.14", default-features = false }
+qrcode = { version = "0.15", default-features = false }
 rand_core = { version = "0.6", features = ["getrandom"] }
 route_manager = "0.2.18"
 serde = { version = "1", features = ["derive"] }
