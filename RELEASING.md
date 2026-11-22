@@ -4,14 +4,20 @@ Releases are fully automated by GitHub Actions.
 
 ## Cut a release
 
-1. Bump `version` in `Cargo.toml` (and run `cargo check` so `Cargo.lock` updates).
-2. Move the "Unreleased" notes in `CHANGELOG.md` under a new `## [X.Y.Z] - YYYY-MM-DD` heading.
-3. Commit, then tag and push:
+1. On a branch, bump `version` in `Cargo.toml` (run `cargo check` so `Cargo.lock` updates)
+   and move the "Unreleased" notes in `CHANGELOG.md` under a new
+   `## [X.Y.Z] - YYYY-MM-DD` heading.
+2. Open a pull request (`main` is protected) and merge it once CI is green.
+3. Tag the merged commit on `main` and push the tag:
 
    ```sh
-   git tag vX.Y.Z
-   git push origin main vX.Y.Z
+   git checkout main && git pull
+   git tag -a vX.Y.Z -m "tvpn vX.Y.Z"
+   git push origin vX.Y.Z
    ```
+
+Release tags (`v*`) are protected by a ruleset: once pushed they cannot be
+moved or deleted (except by the repository owner).
 
 The **Release** workflow then:
 
@@ -40,7 +46,7 @@ enable them one at a time.
 | PyPI | `PYPI_API_TOKEN` | pypi.org → Account settings → API tokens → scope "Entire account" for the first upload, then replace it with a token scoped to the `tvpn` project. |
 | crates.io | `CARGO_REGISTRY_TOKEN` | crates.io → Account Settings → API Tokens → scopes `publish-new` and `publish-update`. |
 | winget | `WINGET_TOKEN` | GitHub → Settings → Developer settings → Personal access tokens (classic) → scope `public_repo`. Used to open a PR on `microsoft/winget-pkgs` from your fork. |
-| Homebrew | *(none)* | The formula is committed to `Formula/tvpn.rb` in this repo, which acts as its own tap. |
+| Homebrew | *(optional)* `HOMEBREW_DEPLOY_KEY` | The formula is committed to `Formula/tvpn.rb` in this repo, which acts as its own tap. Because `main` is protected, the workflow needs a deploy key to commit there directly (deploy keys are allowed to bypass the `main` ruleset). Without it, the formula is pushed to a `homebrew/tvpn-X.Y.Z` branch and the run summary links to a ready-to-open pull request. To set it up: `ssh-keygen -t ed25519 -N "" -f tvpn-deploy -C "tvpn homebrew"`, add `tvpn-deploy.pub` under **Settings → Deploy keys** with *Allow write access*, store the private key `tvpn-deploy` as the `HOMEBREW_DEPLOY_KEY` secret, then delete both local files. |
 
 ## Re-publishing an existing release
 
@@ -54,5 +60,8 @@ are skipped, so re-running is safe.
 - winget submissions are reviewed by Microsoft. The first one usually takes a
   few days. Later versions go through the same PR flow.
 - npm packages are published with provenance (signed build attestations).
-- If branch protection is enabled on `main`, allow GitHub Actions to push, or
-  the Homebrew formula commit will fail.
+- Repository rulesets: **main** (PR required, required CI checks, Copilot
+  review, no force-push/deletion; the owner may bypass only via pull request;
+  deploy keys may push) and **release tags** (`v*` cannot be moved or deleted).
+  The required checks are the CI job names: renaming a job in `ci.yml`
+  requires updating the `main` ruleset (Settings → Rules → Rulesets).

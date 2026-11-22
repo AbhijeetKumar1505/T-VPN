@@ -51,6 +51,13 @@ export TVPN_CONFIG_DIR=/tmp/tvpn-dev/config TVPN_RUNTIME_DIR=/tmp/tvpn-dev/run
 
 ## Pull requests
 
+`main` is protected by a ruleset: every change lands through a pull request,
+force-pushes and branch deletion are blocked, and these CI checks must pass:
+Format, Clippy and Test (Linux, macOS, Windows), MSRV, the real-tunnel e2e test,
+and the installer checks. GitHub Copilot reviews every pull request
+automatically (guided by `.github/copilot-instructions.md`), and all review
+conversations must be resolved before merging.
+
 - Keep changes focused; add tests for behavior changes.
 - Run `cargo fmt`, `cargo clippy` and `cargo test` before pushing.
 - Update `CHANGELOG.md` under "Unreleased".

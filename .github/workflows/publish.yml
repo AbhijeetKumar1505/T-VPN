@@ -9,7 +9,9 @@ name: Publish
 #   pypi      PYPI_API_TOKEN
 #   crates    CARGO_REGISTRY_TOKEN
 #   winget    WINGET_TOKEN          (classic PAT with public_repo scope)
-#   homebrew  none: Formula/tvpn.rb is committed to this repository
+#   homebrew  none required: Formula/tvpn.rb is committed to this repository.
+#             Optional HOMEBREW_DEPLOY_KEY (write deploy key) lets it commit to
+#             the protected main branch; otherwise it pushes a branch for a PR.
 on:
   workflow_call:
     inputs:
@@ -170,6 +172,9 @@ jobs:
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.repository.default_branch }}
+          # A deploy key may bypass the `main` ruleset; without one, the
+          # formula goes to a branch for a pull request instead.
+          ssh-key: ${{ secrets.HOMEBREW_DEPLOY_KEY }}
       - name: Render formula
         env:
           GH_TOKEN: ${{ github.token }}
@@ -181,13 +186,26 @@ jobs:
           cp rendered/homebrew/tvpn.rb Formula/tvpn.rb
           ruby -c Formula/tvpn.rb
       - name: Commit
+        env:
+          VERSION: ${{ needs.check.outputs.version }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
         run: |
           git add Formula/tvpn.rb
           if git diff --cached --quiet; then echo "formula unchanged"; exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore(homebrew): tvpn ${{ needs.check.outputs.version }}"
-          git push
+          git commit -m "chore(homebrew): tvpn $VERSION"
+          if git push origin "HEAD:$DEFAULT_BRANCH"; then exit 0; fi
+          # The branch ruleset rejected the push: hand the update over as a PR.
+          branch="homebrew/tvpn-$VERSION"
+          git push --force origin "HEAD:refs/heads/$branch"
+          url="https://github.com/$GITHUB_REPOSITORY/compare/$DEFAULT_BRANCH...$branch?expand=1"
+          echo "::warning::$DEFAULT_BRANCH is protected, so the formula was pushed to '$branch'. Open a PR: $url"
+          {
+            echo "### Homebrew formula update needs a pull request"
+            echo "Open it here: $url"
+            echo "Add a \`HOMEBREW_DEPLOY_KEY\` secret (see RELEASING.md) to commit directly in future releases."
+          } >> "$GITHUB_STEP_SUMMARY"
 
   winget:
     name: winget
