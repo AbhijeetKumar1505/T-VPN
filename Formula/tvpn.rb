@@ -7,28 +7,28 @@
 class Tvpn < Formula
   desc "On-demand WireGuard VPN for the terminal (client and self-hosted server)"
   homepage "https://github.com/AbhijeetKumar1505/T-VPN"
-  version "0.1.0"
+  version "0.1.1"
   license any_of: ["MIT", "Apache-2.0"]
 
   on_macos do
     on_arm do
-      url "https://github.com/AbhijeetKumar1505/T-VPN/releases/download/v0.1.0/tvpn-aarch64-apple-darwin.tar.gz"
-      sha256 "5e144a63567d281acc911679cf91d28d6f378e14779687281174f9b6e65c3b83"
+      url "https://github.com/AbhijeetKumar1505/T-VPN/releases/download/v0.1.1/tvpn-aarch64-apple-darwin.tar.gz"
+      sha256 "0b996f05fbc4402c34033ba220a459255814533c6e26971260a8fde5b3740bbd"
     end
     on_intel do
-      url "https://github.com/AbhijeetKumar1505/T-VPN/releases/download/v0.1.0/tvpn-x86_64-apple-darwin.tar.gz"
-      sha256 "894b9bed9fe2e5e1ca17fbb3f2846f873394defd5282e01c6aed2dc8f7acfba0"
+      url "https://github.com/AbhijeetKumar1505/T-VPN/releases/download/v0.1.1/tvpn-x86_64-apple-darwin.tar.gz"
+      sha256 "bd7ff5f13580bc1f9de27f088762d479562f0f511c6c5347b86cb66b2bc73b70"
     end
   end
 
   on_linux do
     on_arm do
-      url "https://github.com/AbhijeetKumar1505/T-VPN/releases/download/v0.1.0/tvpn-aarch64-unknown-linux-musl.tar.gz"
-      sha256 "1a4143ddebc073e33804fde5b795b99f9151447f1ad99a171c65c3d78914f8fe"
+      url "https://github.com/AbhijeetKumar1505/T-VPN/releases/download/v0.1.1/tvpn-aarch64-unknown-linux-musl.tar.gz"
+      sha256 "f160eef937889ba6ed472b35951eb743acbc7e0cd51b216ec364b9113d1baa38"
     end
     on_intel do
-      url "https://github.com/AbhijeetKumar1505/T-VPN/releases/download/v0.1.0/tvpn-x86_64-unknown-linux-musl.tar.gz"
-      sha256 "79ea7c46d815522111d7c173d932ef70163a71dedcf9a2dfd76844c09a878dd8"
+      url "https://github.com/AbhijeetKumar1505/T-VPN/releases/download/v0.1.1/tvpn-x86_64-unknown-linux-musl.tar.gz"
+      sha256 "94767d13b75feea3db60fe6837a4e5ab464195e321d7c2c82f178c3b550e9709"
     end
   end
 
