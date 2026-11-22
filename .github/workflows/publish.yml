@@ -1,0 +1,214 @@
+name: Publish
+
+# Publishes an existing GitHub release to package registries. Called by the
+# Release workflow, or run manually (Actions > Publish > Run workflow) to
+# (re)publish a tag, e.g. after adding a registry token.
+#
+# Channels are enabled by repository secrets; missing ones are skipped:
+#   npm       NPM_TOKEN
+#   pypi      PYPI_API_TOKEN
+#   crates    CARGO_REGISTRY_TOKEN
+#   winget    WINGET_TOKEN          (classic PAT with public_repo scope)
+#   homebrew  none: Formula/tvpn.rb is committed to this repository
+on:
+  workflow_call:
+    inputs:
+      tag:
+        type: string
+        required: true
+      channels:
+        type: string
+        default: all
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to publish (e.g. v0.1.0)
+        type: string
+        required: true
+      channels:
+        description: "Comma-separated: npm,pypi,crates,homebrew,winget (or all)"
+        type: string
+        default: all
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Select channels
+    runs-on: ubuntu-latest
+    outputs:
+      npm: ${{ steps.c.outputs.npm }}
+      pypi: ${{ steps.c.outputs.pypi }}
+      crates: ${{ steps.c.outputs.crates }}
+      homebrew: ${{ steps.c.outputs.homebrew }}
+      winget: ${{ steps.c.outputs.winget }}
+      version: ${{ steps.c.outputs.version }}
+    steps:
+      - id: c
+        env:
+          TAG: ${{ inputs.tag }}
+          CHANNELS: ${{ inputs.channels }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+          WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null || { echo "::error::release $TAG not found"; exit 1; }
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+          want() { [[ "$CHANNELS" == all || ",${CHANNELS// /}," == *",$1,"* ]]; }
+          summary() { echo "| $1 | $2 |" >> "$GITHUB_STEP_SUMMARY"; }
+          echo "### Publishing $TAG" >> "$GITHUB_STEP_SUMMARY"
+          echo "| channel | status |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          decide() { # channel secret-value secret-name
+            if ! want "$1"; then echo "$1=false" >> "$GITHUB_OUTPUT"; summary "$1" "not selected"
+            elif [[ -z "$2" ]]; then echo "$1=false" >> "$GITHUB_OUTPUT"; summary "$1" "skipped: add the \`$3\` secret"
+            else echo "$1=true" >> "$GITHUB_OUTPUT"; summary "$1" "publishing"; fi
+          }
+          decide npm "$NPM_TOKEN" NPM_TOKEN
+          decide pypi "$PYPI_API_TOKEN" PYPI_API_TOKEN
+          decide crates "$CARGO_REGISTRY_TOKEN" CARGO_REGISTRY_TOKEN
+          decide winget "$WINGET_TOKEN" WINGET_TOKEN
+          decide homebrew "always" "-"
+
+  npm:
+    name: npm
+    needs: check
+    if: needs.check.outputs.npm == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+      - name: Download release binaries
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download "${{ inputs.tag }}" --repo "$GITHUB_REPOSITORY" -D assets \
+            -p 'tvpn-*-*-*.tar.gz' -p 'tvpn-*-*-*.zip'
+          mkdir -p bin
+          for f in assets/*.tar.gz; do t="${f#assets/tvpn-}"; t="${t%.tar.gz}"; mkdir -p "bin/$t"; tar -xzf "$f" -C "bin/$t"; done
+          for f in assets/*.zip; do t="${f#assets/tvpn-}"; t="${t%.zip}"; mkdir -p "bin/$t"; unzip -q -o "$f" -d "bin/$t"; done
+      - run: node packaging/npm/build.mjs --version "${{ needs.check.outputs.version }}" --artifacts bin --out npm
+      - name: Publish (platform packages first)
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          set -euo pipefail
+          version="${{ needs.check.outputs.version }}"
+          for dir in npm/tvpn-*/ npm/tvpn/; do
+            name="$(node -p "require('./${dir}package.json').name")"
+            if npm view "$name@$version" version > /dev/null 2>&1; then
+              echo "$name@$version already published, skipping"
+            else
+              npm publish "$dir" --access public --provenance
+            fi
+          done
+
+  pypi:
+    name: PyPI
+    needs: check
+    if: needs.check.outputs.pypi == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Download wheels and sdist
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download "${{ inputs.tag }}" --repo "$GITHUB_REPOSITORY" -D pypi \
+            -p '*.whl' -p "tvpn-${{ needs.check.outputs.version }}.tar.gz"
+          ls -l pypi
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: pypi/
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          skip-existing: true
+
+  crates:
+    name: crates.io
+    needs: check
+    if: needs.check.outputs.crates == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag }}
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Publish
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: |
+          version="${{ needs.check.outputs.version }}"
+          if curl -fsS -A "tvpn-release-ci (https://github.com/$GITHUB_REPOSITORY)" \
+              "https://crates.io/api/v1/crates/tvpn/$version" > /dev/null 2>&1; then
+            echo "tvpn $version already on crates.io, skipping"
+          else
+            cargo publish --locked
+          fi
+
+  homebrew:
+    name: Homebrew formula
+    needs: check
+    if: needs.check.outputs.homebrew == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+      - name: Render formula
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download "${{ inputs.tag }}" --repo "$GITHUB_REPOSITORY" -D assets -p SHA256SUMS
+          node packaging/render.mjs --version "${{ needs.check.outputs.version }}" \
+            --repo "$GITHUB_REPOSITORY" --checksums assets/SHA256SUMS --out rendered
+          mkdir -p Formula
+          cp rendered/homebrew/tvpn.rb Formula/tvpn.rb
+          ruby -c Formula/tvpn.rb
+      - name: Commit
+        run: |
+          git add Formula/tvpn.rb
+          if git diff --cached --quiet; then echo "formula unchanged"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(homebrew): tvpn ${{ needs.check.outputs.version }}"
+          git push
+
+  winget:
+    name: winget
+    needs: check
+    if: needs.check.outputs.winget == 'true'
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag }}
+      - name: Render manifests
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download "${{ inputs.tag }}" --repo "$GITHUB_REPOSITORY" -D assets -p SHA256SUMS
+          node packaging/render.mjs --version "${{ needs.check.outputs.version }}" \
+            --repo "$GITHUB_REPOSITORY" --checksums assets/SHA256SUMS --out rendered
+      - name: Submit to microsoft/winget-pkgs
+        env:
+          WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}
+        run: |
+          Invoke-WebRequest -UseBasicParsing https://aka.ms/wingetcreate/latest -OutFile wingetcreate.exe
+          .\wingetcreate.exe submit --token $env:WINGET_TOKEN rendered\winget

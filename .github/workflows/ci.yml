@@ -1,0 +1,116 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ["Formula/**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  fmt:
+    name: Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - run: cargo fmt --all --check
+
+  clippy:
+    name: Clippy (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo clippy --locked --all-targets -- -D warnings
+
+  test:
+    name: Test (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo test --locked
+      - name: CLI smoke test
+        shell: bash
+        run: |
+          set -euo pipefail
+          export TVPN_CONFIG_DIR="$RUNNER_TEMP/tvpn-config" TVPN_RUNTIME_DIR="$RUNNER_TEMP/tvpn-run" NO_COLOR=1
+          tvpn=target/debug/tvpn
+          $tvpn --version
+          $tvpn genkey | $tvpn pubkey
+          $tvpn server init --endpoint vpn.example.com
+          $tvpn server add-peer laptop --import
+          $tvpn server peers
+          $tvpn list
+          $tvpn show laptop
+          $tvpn doctor || true
+          for sh in bash zsh fish powershell elvish; do $tvpn completions $sh > /dev/null; done
+          set +e; $tvpn status; code=$?; set -e
+          test "$code" = 3
+
+  msrv:
+    name: MSRV (1.88)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@1.88
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo check --locked --all-targets
+
+  e2e:
+    name: Real tunnels (Linux network namespaces)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build --locked
+      - run: sudo bash tests/e2e/netns.sh target/debug/tvpn
+
+  scripts:
+    name: Installers and packaging scripts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: install.sh
+        run: |
+          sh -n install.sh
+          shellcheck --shell=sh --severity=warning install.sh
+          shellcheck --severity=warning tests/e2e/netns.sh
+      - name: install.ps1
+        shell: pwsh
+        run: |
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile("$PWD/install.ps1", [ref]$null, [ref]$errors) | Out-Null
+          if ($errors) { $errors | Out-String | Write-Error; exit 1 }
+      - name: Node scripts
+        run: |
+          node --check packaging/npm/build.mjs
+          node --check packaging/render.mjs
+          node --check packaging/npm/tvpn/bin/tvpn.js

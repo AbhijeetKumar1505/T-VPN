@@ -6,7 +6,7 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
-## [0.1.0]
+## [0.1.0] - 2026-11-22
 
 ### Added
 - `tvpn up` / `down` / `status`: on-demand WireGuard client that runs in the

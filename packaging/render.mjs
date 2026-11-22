@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 // Render the Homebrew formula and winget manifests for a release.
 //
-//   node packaging/render.mjs --version 0.1.0 --repo owner/tvpn \
+//   node packaging/render.mjs --version 0.1.0 --repo AbhijeetKumar1505/T-VPN \
 //        --checksums dist/SHA256SUMS [--winget-id Owner.tvpn] [--out dist/packaging]
 //
-// Placeholders: {{VERSION}} {{REPO}} {{REPO_OWNER}} {{WINGET_ID}} {{DATE}}
+// Placeholders: {{VERSION}} {{REPO}} {{REPO_OWNER}} {{REPO_OWNER_LOWER}} {{WINGET_ID}} {{DATE}}
 //               {{SHA256:<asset>}} {{SHA256_UPPER:<asset>}}
 
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -42,6 +42,7 @@ function render(template) {
       case "VERSION": return version;
       case "REPO": return repo;
       case "REPO_OWNER": return owner;
+      case "REPO_OWNER_LOWER": return owner.toLowerCase();
       case "WINGET_ID": return wingetId;
       case "DATE": return new Date().toISOString().slice(0, 10);
       case "SHA256":

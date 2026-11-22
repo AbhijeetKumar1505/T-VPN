@@ -1,0 +1,51 @@
+name: Bug report
+description: Something doesn't work as expected
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! Please **never paste private keys**: `tvpn show` hides them by default.
+        Security issues: use private vulnerability reporting (see SECURITY.md) instead of an issue.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you run, what did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Output of `tvpn doctor`
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Re-run the failing command with `-vv` and paste the output (remove anything sensitive).
+      render: text
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options: [Windows, Linux, macOS, WSL, Other]
+    validations:
+      required: true
+  - type: dropdown
+    id: shell
+    attributes:
+      label: Shell / terminal
+      options: [PowerShell, cmd.exe, Windows Terminal, bash, zsh, fish, Other]
+  - type: dropdown
+    id: install
+    attributes:
+      label: How did you install tvpn?
+      options: [install.sh, install.ps1, npm, pip/pipx/uv, Homebrew, winget, cargo, Built from source]
+  - type: dropdown
+    id: role
+    attributes:
+      label: Mode
+      options: [Client (tvpn up), Server (tvpn server up), Other]

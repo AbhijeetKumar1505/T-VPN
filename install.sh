@@ -1,8 +1,8 @@
 #!/bin/sh
 # tvpn installer for Linux and macOS (also WSL).
 #
-#   curl -fsSL https://raw.githubusercontent.com/OWNER/tvpn/main/install.sh | sh
-#   curl -fsSL https://raw.githubusercontent.com/OWNER/tvpn/main/install.sh | sh -s -- --version 0.1.0 --dir ~/.local/bin
+#   curl -fsSL https://raw.githubusercontent.com/AbhijeetKumar1505/T-VPN/main/install.sh | sh
+#   curl -fsSL https://raw.githubusercontent.com/AbhijeetKumar1505/T-VPN/main/install.sh | sh -s -- --version 0.1.0 --dir ~/.local/bin
 #
 # Environment overrides: TVPN_VERSION, TVPN_INSTALL_DIR, TVPN_REPO,
 # TVPN_DOWNLOAD_BASE (a mirror URL containing the release assets).
@@ -10,7 +10,7 @@
 
 set -eu
 
-REPO="${TVPN_REPO:-OWNER/tvpn}"
+REPO="${TVPN_REPO:-AbhijeetKumar1505/T-VPN}"
 VERSION="${TVPN_VERSION:-latest}"
 INSTALL_DIR="${TVPN_INSTALL_DIR:-}"
 

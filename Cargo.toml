@@ -6,12 +6,12 @@ rust-version = "1.88"
 authors = ["T-VPN contributors"]
 description = "On-demand WireGuard VPN for the terminal: client and self-hosted server in one Rust binary"
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/OWNER/tvpn"
-documentation = "https://github.com/OWNER/tvpn#readme"
+repository = "https://github.com/AbhijeetKumar1505/T-VPN"
+documentation = "https://github.com/AbhijeetKumar1505/T-VPN#readme"
 readme = "README.md"
 keywords = ["vpn", "wireguard", "tunnel", "cli", "privacy"]
 categories = ["command-line-utilities", "network-programming"]
-exclude = ["/packaging", "/scripts", "/.github", "/install.sh", "/install.ps1", "/pyproject.toml"]
+exclude = ["/packaging", "/scripts", "/.github", "/Formula", "/install.sh", "/install.ps1", "/pyproject.toml"]
 
 [lib]
 name = "tvpn"
