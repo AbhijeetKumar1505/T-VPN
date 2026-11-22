@@ -103,6 +103,7 @@ where
             listen_port: port,
             uptime_secs: started.elapsed().as_secs(),
             peers: handle.status(),
+            cloud: state.cloud.clone(),
         }
     };
     let ctl = tokio::spawn(control::serve(s.listener, s.token.clone(), status_fn, cmd_tx));
@@ -304,10 +305,21 @@ impl LiveView {
     }
 }
 
-/// Clean up after a session that died without tearing down.
-pub fn cleanup_stale(state: &SessionState) {
+/// Clean up after a session that died without tearing down: restore network
+/// settings and delete its cloud server, if it had one.
+pub async fn cleanup_stale(state: &SessionState) {
     for w in netcfg::revert(&state.applied) {
         ui::warn(w);
+    }
+    if let Some(server) = state.cloud.clone() {
+        let id = server.instance_id.clone();
+        match tokio::task::spawn_blocking(move || server.terminate()).await {
+            Ok(Ok(())) => ui::success(format!("Deleted its cloud server {id}")),
+            Ok(Err(e)) => ui::warn(format!(
+                "could not delete cloud server {id}: {e:#}\n  run `tvpn cloud cleanup` to retry"
+            )),
+            Err(e) => ui::warn(format!("could not delete cloud server {id}: {e}")),
+        }
     }
     SessionState::remove(state.mode);
 }

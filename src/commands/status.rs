@@ -77,6 +77,9 @@ fn print_client(s: &LiveStatus) {
     println!("{head}{}profile {}", ui::DOT, ui::cyan(&s.profile));
     ui::kv("interface", format!("{} ({})", s.interface, addrs(s)));
     ui::kv("uptime", ui::duration(s.uptime_secs));
+    if let Some(server) = &s.cloud {
+        ui::kv("cloud", super::cloud::describe(server));
+    }
     for p in &s.peers {
         println!();
         ui::kv("peer", format!("{} {}", ui::bold(p.label()), ui::dim(short_key(&p.public_key))));

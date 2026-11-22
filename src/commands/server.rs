@@ -116,7 +116,7 @@ async fn up(args: ServerUpArgs) -> Result<i32> {
             bail!("the server is already running (pid {}); stop it with `tvpn server down`", prev.pid);
         }
         ui::warn("a previous server session did not shut down cleanly; restoring its settings");
-        session::cleanup_stale(&prev);
+        session::cleanup_stale(&prev).await;
     }
 
     let port = cfg.interface.listen_port.expect("validated");
@@ -150,6 +150,7 @@ async fn up(args: ServerUpArgs) -> Result<i32> {
         control_port: listener.local_addr()?.port(),
         started_at: control::now_unix(),
         applied: Applied::default(),
+        cloud: None,
     };
     state.save(&token)?;
 

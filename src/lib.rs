@@ -10,6 +10,7 @@
 //! ([`netcfg`]).
 
 pub mod cli;
+pub mod cloud;
 pub mod commands;
 pub mod config;
 pub mod control;

@@ -97,6 +97,10 @@ pub enum Command {
     /// Generate and print a private/public key pair
     Keypair,
 
+    /// Change your region: a VPN server on demand in the country you pick (your AWS account)
+    #[command(subcommand)]
+    Cloud(CloudCommand),
+
     /// Run and manage your own VPN server
     #[command(subcommand)]
     Server(ServerCommand),
@@ -298,4 +302,90 @@ pub struct ShowPeerArgs {
     /// Render as a QR code
     #[arg(long)]
     pub qr: bool,
+}
+
+const CLOUD_HELP: &str = "\
+Example:
+  tvpn cloud setup            # once: add your AWS access keys
+  tvpn cloud up mumbai        # server in Mumbai; Ctrl+C disconnects and deletes it
+  tvpn cloud up de            # country codes work too; see `tvpn cloud regions`
+
+Each session gets a brand-new server with fresh keys. It is deleted when you
+disconnect, deletes itself if no client is connected for a while, and has a
+maximum lifetime, so a forgotten server doesn't keep costing money.";
+
+#[derive(Debug, Subcommand)]
+#[command(after_help = CLOUD_HELP)]
+pub enum CloudCommand {
+    /// Save your AWS access keys for `tvpn cloud` (one time; shows the IAM policy to use)
+    Setup,
+
+    /// List the regions you can connect through
+    Regions,
+
+    /// Start a server in REGION, connect through it, and delete it when you disconnect
+    Up(CloudUpArgs),
+
+    /// List tvpn cloud servers that are still running (all regions)
+    #[command(visible_alias = "ls")]
+    List,
+
+    /// Delete tvpn cloud servers that are still running
+    Cleanup(CloudCleanupArgs),
+
+    /// Write a server's first-boot script and configs to a folder (for debugging)
+    #[command(hide = true)]
+    Render(CloudRenderArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct CloudRenderArgs {
+    /// Public IP the client config should point at
+    #[arg(long)]
+    pub server_ip: std::net::IpAddr,
+
+    /// Output folder (gets user-data.sh, server/server.conf, server/server.json, client.conf)
+    #[arg(long)]
+    pub dir: PathBuf,
+}
+
+#[derive(Debug, Args)]
+pub struct CloudUpArgs {
+    /// City, country code or AWS region, e.g. mumbai, tokyo, de, us-east-1 (see `tvpn cloud regions`)
+    pub region: String,
+
+    /// EC2 instance type for the server
+    #[arg(long, default_value = "t3.micro", value_name = "TYPE")]
+    pub instance_type: String,
+
+    /// Safety net: delete the server after this many hours even if you stay connected
+    #[arg(long, default_value_t = 8, value_parser = clap::value_parser!(u32).range(1..=168))]
+    pub max_hours: u32,
+
+    /// Safety net: the server deletes itself after this many minutes without a client
+    #[arg(long, default_value_t = 15, value_parser = clap::value_parser!(u32).range(5..=1440))]
+    pub idle_minutes: u32,
+
+    /// Do not change the system DNS settings
+    #[arg(long)]
+    pub no_dns: bool,
+
+    /// No banner or live status line
+    #[arg(short, long)]
+    pub quiet: bool,
+
+    /// Never re-run automatically through sudo (Linux/macOS)
+    #[arg(long)]
+    pub no_sudo: bool,
+
+    /// tvpn version to install on the server (default: this version)
+    #[arg(long, hide = true)]
+    pub server_version: Option<String>,
+}
+
+#[derive(Debug, Args)]
+pub struct CloudCleanupArgs {
+    /// Delete without asking for confirmation
+    #[arg(short, long)]
+    pub yes: bool,
 }

@@ -65,7 +65,9 @@ software, not a VPN service, so the config comes from a server somewhere:
 
 - a VPN provider that offers WireGuard downloads (look for "WireGuard
   configuration" in your account), or
-- your own server: see [Run your own server](#run-your-own-server).
+- your own server: see [Run your own server](#run-your-own-server), or
+- a server tvpn starts for you in any region: see
+  [Change your region on demand](#change-your-region-on-demand).
 
 The profile name (`work` below) is just a label you choose.
 
@@ -91,6 +93,36 @@ You can also connect straight from a file without importing it:
 | `--interface NAME` | name of the tunnel interface (default `tvpn0`, `tvpn` on Windows) |
 | `-q, --quiet` | no banner or status line |
 | `--no-sudo` | never re-run through sudo automatically |
+
+## Change your region on demand
+
+To appear in another country, your traffic has to leave the internet from a
+server in that country. `tvpn cloud` starts one for you on **your own AWS
+account**, connects through it, and deletes it when you disconnect. One
+computer is all you need:
+
+```sh
+tvpn cloud setup        # once: add AWS access keys (it shows the exact IAM policy to use)
+tvpn cloud regions      # Mumbai, Tokyo, Singapore, Frankfurt, London, N. Virginia, ...
+tvpn cloud up mumbai    # about a minute to boot, then all traffic exits in Mumbai
+                        # Ctrl+C (or `tvpn down`) disconnects and deletes the server
+```
+
+City names, country codes (`de`, `jp`, `uk`) and AWS region codes all work.
+
+- **Cost.** New AWS accounts get [Free Tier credits](https://aws.amazon.com/free).
+  After that, a server costs roughly 1–2 cents per hour, only while you're
+  connected. AWS requires a payment card at signup.
+- **Private.** Every session gets a brand-new server and fresh WireGuard keys;
+  the IP is yours alone, not shared with other VPN users.
+- **Can't be forgotten.** The server is deleted when you disconnect. As safety
+  nets it also deletes itself after 15 minutes without a connected client
+  (`--idle-minutes`) and after 8 hours at most (`--max-hours`).
+  `tvpn cloud ls` shows any server that is still running, and `tvpn cloud cleanup`
+  deletes leftovers.
+
+Credentials are read from `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY`, from
+`tvpn cloud setup`, or from `~/.aws/credentials` (`AWS_PROFILE` selects a profile).
 
 ## Run your own server
 
@@ -137,6 +169,7 @@ tvpn import FILE [--name]  save a WireGuard config     tvpn keypair    private +
 tvpn list                  list profiles               tvpn doctor     check this system
 tvpn show NAME [--qr]      show a profile              tvpn completions SHELL
 tvpn remove NAME           delete a profile            tvpn server ... run your own server
+tvpn cloud up REGION       server on demand in REGION  tvpn cloud ...  setup, regions, ls, cleanup
 ```
 
 Use `-v`, `-vv`, `-vvv` for more logging, `--no-color` (or `NO_COLOR=1`) for

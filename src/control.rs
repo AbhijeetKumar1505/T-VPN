@@ -47,6 +47,9 @@ pub struct SessionState {
     pub started_at: u64,
     #[serde(default)]
     pub applied: Applied,
+    /// Server created by `tvpn cloud up` for this session (deleted on disconnect).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cloud: Option<crate::cloud::CloudServer>,
 }
 
 fn state_path(mode: Mode) -> PathBuf {
@@ -155,6 +158,8 @@ pub struct LiveStatus {
     pub listen_port: Option<u16>,
     pub uptime_secs: u64,
     pub peers: Vec<PeerStatus>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cloud: Option<crate::cloud::CloudServer>,
 }
 
 /// Commands that the session's main loop must act on.
